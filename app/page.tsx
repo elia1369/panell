@@ -2,22 +2,26 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { INITIAL_LEGAL_ACCOUNTS, LegalAccount } from "@/lib/mockData";
+import { LegalAccount } from "@/lib/mockData";
+import { AuthUser, getCurrentUser, logoutUser } from "@/lib/auth";
 import LandingPage from "@/components/LandingPage";
 import LegalSpecialistPanel from "@/components/LegalSpecialistPanel";
-import SupervisorPanel from "@/components/SupervisorPanel";
-import CorporateClientPortal from "@/components/CorporateClientPortal";
+import ManagementPanel from "@/components/ManagementPanel";
 import LegalRegistrationModal from "@/components/LegalRegistrationModal";
+import ChangePasswordModal from "@/components/ChangePasswordModal";
 
-const EXPERTS = ["آیگین", "مریم", "لیلا", "سپهر", "فاطمه", "اسما", "غزل"];
+const EXPERTS = ["آیگین صدیق", "غزل خدائی", "اسما فاضلی"];
 
 export default function Home() {
-  const [currentRole, setCurrentRole] = useState<"landing" | "specialist" | "supervisor" | "client">("landing");
+  const [currentRole, setCurrentRole] = useState<"landing" | "specialist" | "management">("landing");
   const [accounts, setAccounts] = useState<LegalAccount[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Quick Direct Registration modal trigger from landing page
+  // Authentication & Security State
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
+  // Quick Direct Registration modal trigger
   const [isQuickRegistrationOpen, setIsQuickRegistrationOpen] = useState(false);
 
   useEffect(() => {
@@ -29,85 +33,61 @@ export default function Home() {
     } else {
       document.documentElement.classList.remove("dark");
     }
-    setIsDarkMode(isDark);
 
-    // 2. Accounts initialization
-    const stored = localStorage.getItem("wallex_legal_accounts_v3");
-    let loadedAccounts: LegalAccount[] = INITIAL_LEGAL_ACCOUNTS;
+    // 2. Authentication user restore
+    const activeUser = getCurrentUser();
+    if (activeUser) {
+      setCurrentUser(activeUser);
+      setCurrentRole(activeUser.role);
+    } else {
+      setCurrentRole("landing");
+    }
 
+    // 3. Clean accounts state
+    const storageKey = "wallex_legal_accounts_v5_clean";
+    const stored = localStorage.getItem(storageKey);
+    let loadedAccounts: LegalAccount[] = [];
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           loadedAccounts = parsed;
-        } else {
-          loadedAccounts = INITIAL_LEGAL_ACCOUNTS;
-          localStorage.setItem("wallex_legal_accounts_v3", JSON.stringify(INITIAL_LEGAL_ACCOUNTS));
         }
-      } catch (e) {
-        loadedAccounts = INITIAL_LEGAL_ACCOUNTS;
+      } catch {
+        loadedAccounts = [];
       }
-    } else {
-      localStorage.setItem("wallex_legal_accounts_v3", JSON.stringify(INITIAL_LEGAL_ACCOUNTS));
     }
-
-    // Ensure all accounts have non-empty unique IDs and reasonable default values
-    const seenIds = new Set<string>();
-    const sanitized = loadedAccounts.map(acc => {
-      let uId = acc.id || "account";
-      let count = 1;
-      while (seenIds.has(uId)) {
-        uId = `${acc.id || "account"}_${count}`;
-        count++;
-      }
-      seenIds.add(uId);
-
-      // Estimate initial form completion percentage if missing
-      let comp = acc.formCompletionPercentage;
-      if (comp === undefined) {
-        let score = 3;
-        if (acc.companyName) score++;
-        if (acc.adminName) score++;
-        if (acc.signers) score += 2;
-        if (acc.phase === "approved") score += 3;
-        comp = Math.min(100, score * 10);
-      }
-
-      return {
-        ...acc,
-        id: uId,
-        formCompletionPercentage: comp
-      };
-    });
-
-    setAccounts(sanitized);
+    setAccounts(loadedAccounts);
     setIsClient(true);
   }, []);
 
   const saveToStorage = (updatedList: LegalAccount[]) => {
     setAccounts(updatedList);
-    localStorage.setItem("wallex_legal_accounts_v3", JSON.stringify(updatedList));
+    localStorage.setItem("wallex_legal_accounts_v5_clean", JSON.stringify(updatedList));
   };
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(prev => {
-      const nextVal = !prev;
-      localStorage.setItem("wallex_dark_mode", String(nextVal));
-      if (nextVal) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-      return nextVal;
-    });
+  // Direct login without intermediate role selection screen:
+  // Role is automatically determined by credentials!
+  const handleLoginSuccess = (user: AuthUser) => {
+    setCurrentUser(user);
+    if (user.role === "specialist") {
+      setCurrentRole("specialist");
+    } else if (user.role === "management") {
+      setCurrentRole("management");
+    } else {
+      setCurrentRole("specialist");
+    }
   };
 
-  // Handler when quick registration is completed from landing page
+  const handleLogout = () => {
+    logoutUser();
+    setCurrentUser(null);
+    setCurrentRole("landing");
+  };
+
   const handleQuickRegistrationSave = (newAccount: LegalAccount) => {
     const updated = [newAccount, ...accounts];
     saveToStorage(updated);
-    // Automatically navigate to specialist panel so they can see their new record
-    setCurrentRole("specialist");
   };
 
   if (!isClient) {
@@ -122,6 +102,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-850 dark:text-slate-100 flex flex-col transition-colors duration-200">
       <AnimatePresence mode="wait">
+        {/* Screen 1: Minimalist Login Entry */}
         {currentRole === "landing" && (
           <motion.div
             key="landing"
@@ -131,16 +112,11 @@ export default function Home() {
             transition={{ duration: 0.2 }}
             className="flex-1"
           >
-            <LandingPage
-              onSelectRole={(role) => setCurrentRole(role)}
-              onOpenQuickRegistration={() => setIsQuickRegistrationOpen(true)}
-              accounts={accounts}
-              isDarkMode={isDarkMode}
-              onToggleDarkMode={toggleDarkMode}
-            />
+            <LandingPage onLoginSuccess={handleLoginSuccess} />
           </motion.div>
         )}
 
+        {/* Screen 2: Direct Legal Specialist Panel for Legal Team */}
         {currentRole === "specialist" && (
           <motion.div
             key="specialist"
@@ -153,55 +129,52 @@ export default function Home() {
             <LegalSpecialistPanel
               accounts={accounts}
               onUpdateAccounts={saveToStorage}
-              onBackToLanding={() => setCurrentRole("landing")}
-              onSwitchRole={(role) => setCurrentRole(role)}
+              onBackToLanding={handleLogout}
+              onSwitchRole={() => {}}
+              currentUser={currentUser}
+              onOpenChangePassword={() => setIsChangePasswordOpen(true)}
+              onLogout={handleLogout}
             />
           </motion.div>
         )}
 
-        {currentRole === "supervisor" && (
+        {/* Screen 3: Direct Management Panel for Management Team */}
+        {currentRole === "management" && (
           <motion.div
-            key="supervisor"
+            key="management"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
             className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6"
           >
-            <SupervisorPanel
+            <ManagementPanel
               accounts={accounts}
-              onUpdateAccounts={saveToStorage}
-              onBackToLanding={() => setCurrentRole("landing")}
-              onSwitchRole={(role) => setCurrentRole(role)}
-            />
-          </motion.div>
-        )}
-
-        {currentRole === "client" && (
-          <motion.div
-            key="client"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6"
-          >
-            <CorporateClientPortal
-              accounts={accounts}
-              onBackToLanding={() => setCurrentRole("landing")}
-              onSwitchRole={(role) => setCurrentRole(role)}
+              onBackToLanding={handleLogout}
+              onSwitchRole={() => {}}
+              currentUser={currentUser}
+              onOpenChangePassword={() => setIsChangePasswordOpen(true)}
+              onLogout={handleLogout}
             />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Quick Direct Registration from Landing Page */}
+      {/* Quick Direct Registration Modal (Accessible from Legal Panel) */}
       <LegalRegistrationModal
         isOpen={isQuickRegistrationOpen}
         onClose={() => setIsQuickRegistrationOpen(false)}
         onSave={handleQuickRegistrationSave}
         experts={EXPERTS}
         initialMode="initial_only"
+      />
+
+      {/* Change Password Modal (Minimalist: Lock Logo, 3 Boxes & Submit Button) */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+        currentUser={currentUser}
+        onPasswordChanged={(updated) => setCurrentUser(updated)}
       />
     </div>
   );

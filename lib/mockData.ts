@@ -169,8 +169,15 @@ export function parseWallexCsv(): LegalAccount[] {
       phase = "processing";
     }
 
+    // Deterministic 11-digit corporate national ID (شناسه ملی ۱۱ رقمی اشخاص حقوقی)
+    const rawDigits = id.replace(/\D/g, "");
+    const nationalId = rawDigits.length >= 7 
+      ? `1400${rawDigits.slice(-7)}` 
+      : `1010${String(Math.abs(hash) % 9000000 + 1000000).padStart(7, "0")}`;
+
     accounts.push({
       id,
+      nationalId,
       date,
       expert,
       lastStatus,
@@ -191,4 +198,4 @@ export function parseWallexCsv(): LegalAccount[] {
   return accounts;
 }
 
-export const INITIAL_LEGAL_ACCOUNTS: LegalAccount[] = parseWallexCsv();
+export const INITIAL_LEGAL_ACCOUNTS: LegalAccount[] = [];

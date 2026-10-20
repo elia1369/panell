@@ -19,7 +19,7 @@ import { LegalAccount } from "@/lib/mockData";
 interface CorporateClientPortalProps {
   accounts: LegalAccount[];
   onBackToLanding: () => void;
-  onSwitchRole: (role: "landing" | "specialist" | "supervisor" | "client") => void;
+  onSwitchRole: (role: "landing" | "specialist" | "support" | "supervisor" | "client") => void;
 }
 
 export default function CorporateClientPortal({
@@ -75,6 +75,12 @@ export default function CorporateClientPortal({
 
         <div className="flex items-center gap-2.5 w-full md:w-auto justify-end">
           <span className="text-xs text-slate-400 font-medium hidden lg:inline">تغییر سریع جایگاه:</span>
+          <button
+            onClick={() => onSwitchRole("support")}
+            className="px-3 py-1.5 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+          >
+            پنل پشتیبانی (استعلام)
+          </button>
           <button
             onClick={() => onSwitchRole("specialist")}
             className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
