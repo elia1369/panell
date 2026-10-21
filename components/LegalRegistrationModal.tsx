@@ -243,15 +243,12 @@ export default function LegalRegistrationModal({
 
   const handleSubmit = () => {
     if (!companyName.trim()) {
-      setValidationError("لطفاً نام رسمی شرکت یا موسسه حقوقی را وارد نمایید.");
+      setValidationError("لطفاً نام شرکت را وارد نمایید.");
       setActiveStep(1);
       return;
     }
-    if (!id.trim()) {
-      setValidationError("لطفاً شناسه کاربری (UID) را وارد نمایید.");
-      setActiveStep(1);
-      return;
-    }
+
+    const finalId = id.trim() || (nationalId.trim() ? nationalId.trim() : String(Math.floor(1000000000 + Math.random() * 9000000000)));
 
     const completion = calculateCompletion();
     
@@ -445,29 +442,16 @@ export default function LegalRegistrationModal({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    نام رسمی شرکت / موسسه ثبتی *
+                    نام شرکت *
                   </label>
                   <input
                     type="text"
-                    placeholder="مثال: شرکت تجارت الکترونیک نوین سهامی خاص"
+                    placeholder="نام شرکت"
                     value={companyName}
                     onChange={e => setCompanyName(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    شناسه کاربری والکس (UID) *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="مثال: 1247401530"
-                    value={id}
-                    onChange={e => handleIdChange(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
@@ -619,26 +603,14 @@ export default function LegalRegistrationModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    نام کامل شرکت در اساسنامه / روزنامه رسمی *
+                    نام شرکت *
                   </label>
                   <input
                     type="text"
-                    placeholder="مثال: شرکت فناوری پردازش نوین سهامی خاص"
+                    placeholder="نام شرکت"
                     value={companyName}
                     onChange={e => setCompanyName(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    شناسه کاربری والکس (UID) *
-                  </label>
-                  <input
-                    type="text"
-                    value={id}
-                    onChange={e => handleIdChange(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono focus:outline-none focus:border-blue-500"
                   />
                 </div>
 

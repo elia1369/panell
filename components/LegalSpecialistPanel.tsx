@@ -243,12 +243,6 @@ export default function LegalSpecialistPanel({
             <h1 className="text-sm font-black text-slate-900 dark:text-white">
               سامانه احراز هویت حقوقی والکس
             </h1>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-              <span className="text-xs text-blue-600 dark:text-blue-400 font-bold">
-                پنل کارشناس حقوقی
-              </span>
-            </div>
           </div>
         </div>
 
@@ -654,7 +648,19 @@ export default function LegalSpecialistPanel({
 
                         {/* Operations */}
                         <td className="px-4 py-3.5 text-left">
-                          <div className="flex items-center justify-end gap-1">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => {
+                                setSelectedAccount(acc);
+                                setModalMode("full_kyc");
+                                setIsModalOpen(true);
+                              }}
+                              className="px-2.5 py-1 text-purple-700 dark:text-purple-300 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-[11px] font-bold"
+                              title="تکمیل و اعتبارسنجی کامل ۵ مرحله احراز هویت حقوقی"
+                            >
+                              <FileCheck2 className="w-3.5 h-3.5 text-purple-600" />
+                              <span className="hidden sm:inline">تکمیل فرم ۵ مرحله‌ای</span>
+                            </button>
                             <button
                               onClick={() => {
                                 setSelectedAccount(acc);
@@ -666,7 +672,6 @@ export default function LegalSpecialistPanel({
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
-
                             <button
                               onClick={() => handleDeleteAccount(acc.id)}
                               className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"

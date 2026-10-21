@@ -1,23 +1,24 @@
 "use client";
 
-export type RoleType = "specialist" | "management";
+export type RoleType = "specialist" | "management" | "support";
 
 export interface AuthUser {
-  username: string; // e.g. "a.sedigh", "q.khodaei", "h.jaliliani"
-  displayUsername: string; // e.g. "a.sedigh", "Q.Khodaei", "H.Jaliliani"
-  aliases?: string[]; // e.g. ["q.khodayi"]
+  username: string; // e.g. "a.sedigh", "q.khodaei", "h.jaliliani", "support agent"
+  displayUsername: string; // e.g. "a.sedigh", "Q.Khodaei", "H.Jaliliani", "support agent"
+  aliases?: string[]; // e.g. ["q.khodayi", "support.agent"]
   password: string; // default "wallex"
   fullName: string;
   role: RoleType;
   title: string;
   avatarInitial: string;
+  canChangePassword?: boolean; // Only true for specifically named legal experts and managers
   lastPasswordChange?: string;
   mustChangePassword?: boolean;
 }
 
 // Exactly matching the user's requested staff members and tasks:
 export const DEFAULT_USERS: AuthUser[] = [
-  // 1. کارشناس حقوقی (Legal Specialists)
+  // 1. کارشناس حقوقی (Legal Specialists - Named with password change access)
   {
     username: "a.sedigh",
     displayUsername: "a.sedigh",
@@ -26,6 +27,7 @@ export const DEFAULT_USERS: AuthUser[] = [
     role: "specialist",
     title: "کارشناس حقوقی",
     avatarInitial: "ص",
+    canChangePassword: true,
     mustChangePassword: true,
   },
   {
@@ -37,6 +39,7 @@ export const DEFAULT_USERS: AuthUser[] = [
     role: "specialist",
     title: "کارشناس حقوقی",
     avatarInitial: "خ",
+    canChangePassword: true,
     mustChangePassword: true,
   },
   {
@@ -47,10 +50,11 @@ export const DEFAULT_USERS: AuthUser[] = [
     role: "specialist",
     title: "کارشناس حقوقی",
     avatarInitial: "ف",
+    canChangePassword: true,
     mustChangePassword: true,
   },
 
-  // 2. بررسی و نظارت مدیریت (Management & Oversight)
+  // 2. بررسی و نظارت مدیریت (Management & Oversight - Named with password change access)
   {
     username: "h.jaliliani",
     displayUsername: "H.Jaliliani",
@@ -59,6 +63,7 @@ export const DEFAULT_USERS: AuthUser[] = [
     role: "management",
     title: "بررسی و نظارت مدیریت",
     avatarInitial: "ج",
+    canChangePassword: true,
     mustChangePassword: true,
   },
   {
@@ -69,6 +74,7 @@ export const DEFAULT_USERS: AuthUser[] = [
     role: "management",
     title: "بررسی و نظارت مدیریت",
     avatarInitial: "ج",
+    canChangePassword: true,
     mustChangePassword: true,
   },
   {
@@ -79,6 +85,7 @@ export const DEFAULT_USERS: AuthUser[] = [
     role: "management",
     title: "بررسی و نظارت مدیریت",
     avatarInitial: "ع",
+    canChangePassword: true,
     mustChangePassword: true,
   },
   {
@@ -90,6 +97,7 @@ export const DEFAULT_USERS: AuthUser[] = [
     role: "management",
     title: "بررسی و نظارت مدیریت",
     avatarInitial: "ا",
+    canChangePassword: true,
     mustChangePassword: true,
   },
   {
@@ -100,6 +108,7 @@ export const DEFAULT_USERS: AuthUser[] = [
     role: "management",
     title: "بررسی و نظارت مدیریت",
     avatarInitial: "م",
+    canChangePassword: true,
     mustChangePassword: true,
   },
   {
@@ -110,6 +119,7 @@ export const DEFAULT_USERS: AuthUser[] = [
     role: "management",
     title: "بررسی و نظارت مدیریت",
     avatarInitial: "ی",
+    canChangePassword: true,
     mustChangePassword: true,
   },
   {
@@ -120,12 +130,39 @@ export const DEFAULT_USERS: AuthUser[] = [
     role: "management",
     title: "بررسی و نظارت مدیریت",
     avatarInitial: "ر",
+    canChangePassword: true,
     mustChangePassword: true,
+  },
+  {
+    username: "e.ghafarallahi",
+    displayUsername: "E.Ghafarallahi",
+    aliases: ["e. ghafarallahi", "E. Ghafarallahi", "e_ghafarallahi", "eghafarallahi"],
+    password: "wallex",
+    fullName: "احسان غفراللهی",
+    role: "management",
+    title: "بررسی و نظارت مدیریت",
+    avatarInitial: "غ",
+    canChangePassword: true,
+    mustChangePassword: true,
+  },
+
+  // 3. سایر کارشناسان (Customer Support - support agent without password change)
+  {
+    username: "support agent",
+    displayUsername: "support agent",
+    aliases: ["support.agent", "support_agent", "supportagent", "Support Agent"],
+    password: "wallex",
+    fullName: "کارشناس پشتیبانی مشتریان",
+    role: "support",
+    title: "کارشناس پشتیبانی (استعلام با شناسه ملی)",
+    avatarInitial: "پ",
+    canChangePassword: false, // امکان تغییر رمز عبور را ندارند
+    mustChangePassword: false,
   },
 ];
 
-const STORAGE_USERS_KEY = "wallex_auth_users_v4_rbac";
-const STORAGE_CURRENT_USER_KEY = "wallex_auth_current_user_v4_rbac";
+const STORAGE_USERS_KEY = "wallex_auth_users_v6_rbac";
+const STORAGE_CURRENT_USER_KEY = "wallex_auth_current_user_v6_rbac";
 
 function normalizeUsername(str: string): string {
   return str.trim().toLowerCase().replace(/\s+/g, "");
@@ -204,6 +241,12 @@ export function changeUserPassword(username: string, currentPassword: string, ne
   }
 
   const user = users[userIndex];
+
+  // Check if user has permission to change password
+  if (user.canChangePassword === false) {
+    return { success: false, error: "امکان تغییر رمز عبور برای کارشناسان عمومی پشتیبانی تعریف نشده است." };
+  }
+
   if (user.password !== currentPassword) {
     return { success: false, error: "رمز عبور فعلی وارد شده نادرست است." };
   }

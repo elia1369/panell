@@ -24,14 +24,20 @@ import {
   Sparkles,
   Award,
   KeyRound,
-  LogOut
+  LogOut,
+  Edit3,
+  PlusCircle,
+  FileText
 } from "lucide-react";
 import { LegalAccount, StatusPhase } from "@/lib/mockData";
 import { isShamsiDateInPeriod, getTodayShamsiString } from "@/lib/utils";
 import { AuthUser } from "@/lib/auth";
+import ManagementEditModal from "./ManagementEditModal";
+import LegalRegistrationModal from "./LegalRegistrationModal";
 
 interface ManagementPanelProps {
   accounts: LegalAccount[];
+  onUpdateAccounts: (updated: LegalAccount[]) => void;
   onBackToLanding: () => void;
   onSwitchRole: (role: "landing" | "specialist" | "support" | "management" | "client") => void;
   currentUser?: AuthUser | null;
@@ -39,10 +45,11 @@ interface ManagementPanelProps {
   onLogout?: () => void;
 }
 
-const EXPERTS = ["آیگین", "مریم", "لیلا", "سپهر", "فاطمه", "اسما", "غزل"];
+const EXPERTS = ["آیگین صدیق", "غزل خدائی", "اسما فاضلی"];
 
 export default function ManagementPanel({
   accounts,
+  onUpdateAccounts,
   onBackToLanding,
   onSwitchRole,
   currentUser,
@@ -56,6 +63,45 @@ export default function ManagementPanel({
   const [selectedStatusPreset, setSelectedStatusPreset] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeChartTab, setActiveChartTab] = useState<"status" | "trend" | "experts">("status");
+
+  // Managerial Editing & Change Recording States
+  const [editingAccount, setEditingAccount] = useState<LegalAccount | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isFullKycModalOpen, setIsFullKycModalOpen] = useState(false);
+  const [isNewAccountModalOpen, setIsNewAccountModalOpen] = useState(false);
+  const [managerToast, setManagerToast] = useState<string | null>(null);
+
+  const handleOpenEdit = (acc: LegalAccount) => {
+    setEditingAccount(acc);
+    setIsEditModalOpen(true);
+  };
+
+  const handleOpenFullKycFromEdit = (acc: LegalAccount) => {
+    setEditingAccount(acc);
+    setIsFullKycModalOpen(true);
+  };
+
+  const handleSaveManagerChanges = (updatedAccount: LegalAccount) => {
+    const updatedList = accounts.map(a => a.id === updatedAccount.id ? updatedAccount : a);
+    onUpdateAccounts(updatedList);
+    setManagerToast(`تغییرات مدیریتی برای شرکت «${updatedAccount.companyName}» با موفقیت ذخیره شد.`);
+    setTimeout(() => setManagerToast(null), 4000);
+  };
+
+  const handleSaveFullKycAccount = (savedAccount: LegalAccount) => {
+    let updatedList = [...accounts];
+    const idx = updatedList.findIndex(a => a.id === savedAccount.id);
+    if (idx >= 0) {
+      updatedList[idx] = savedAccount;
+    } else {
+      updatedList = [savedAccount, ...updatedList];
+    }
+    onUpdateAccounts(updatedList);
+    setIsFullKycModalOpen(false);
+    setIsNewAccountModalOpen(false);
+    setManagerToast(`اطلاعات حقوقی شرکت «${savedAccount.companyName}» با موفقیت ذخیره شد.`);
+    setTimeout(() => setManagerToast(null), 4000);
+  };
 
   // Filtered accounts for management reporting
   const filteredAccounts = useMemo(() => {
@@ -230,17 +276,22 @@ export default function ManagementPanel({
             <h1 className="text-sm font-black text-slate-900 dark:text-white">
               سامانه احراز هویت حقوقی والکس
             </h1>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse" />
-              <span className="text-xs text-purple-600 dark:text-purple-400 font-bold">
-                بررسی و نظارت مدیریت
-              </span>
-            </div>
           </div>
         </div>
 
         {/* Actions & User Profile */}
         <div className="flex items-center gap-2.5 w-full md:w-auto justify-end flex-wrap">
+          <button
+            onClick={() => {
+              setEditingAccount(null);
+              setIsNewAccountModalOpen(true);
+            }}
+            className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            title="ثبت مستقیم پرونده جدید حقوقی توسط مدیریت"
+          >
+            <PlusCircle className="w-3.5 h-3.5" />
+            <span>+ ثبت پرونده جدید</span>
+          </button>
           <button
             onClick={handleExportManagementReport}
             className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
@@ -248,7 +299,6 @@ export default function ManagementPanel({
             <Download className="w-3.5 h-3.5" />
             <span>خروجی اکسل مدیریتی</span>
           </button>
-
           <button
             onClick={handlePrintSummary}
             className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
@@ -293,6 +343,14 @@ export default function ManagementPanel({
           )}
         </div>
       </div>
+
+      {/* Toast Feedback */}
+      {managerToast && (
+        <div className="px-4 py-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-bold flex items-center gap-2 animate-fadeIn">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <span>{managerToast}</span>
+        </div>
+      )}
 
       {/* KPI Cards: Executive High-Level Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
@@ -484,85 +542,161 @@ export default function ManagementPanel({
 
         {/* CHART 1: STATUS DISTRIBUTION BREAKDOWN */}
         {activeChartTab === "status" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div className="space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <PieChart className="w-4 h-4 text-purple-600" />
+                <span>نمودار تعیین وضعیت‌ها و تحلیل آماری مراحل احراز هویت حقوقی</span>
+              </h4>
+              {selectedStatusPreset !== "all" && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-purple-600 dark:text-purple-400 font-bold">فیلتر وضعیت فعال: {selectedStatusPreset}</span>
+                  <button
+                    onClick={() => setSelectedStatusPreset("all")}
+                    className="text-[11px] text-rose-600 hover:underline font-bold"
+                  >
+                    (حذف فیلتر)
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               {/* Macro Phase Progress Bars */}
               <div className="space-y-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
-                <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                  نمای کلی سه فاز پیشرفت پرونده‌ها:
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    آمار و درصد فازهای کلان احراز هویت:
+                  </h4>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    مجموع: {analytics.total} پرونده
+                  </span>
+                </div>
 
+                {/* 1. Approved */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-semibold">
                     <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-                      تأیید نهایی شده (سبز)
+                      تأیید نهایی شده (سطح ۲)
                     </span>
-                    <span className="font-mono">{analytics.approved} پرونده ({analytics.approvedRate}%)</span>
+                    <span className="font-mono text-slate-700 dark:text-slate-300">
+                      {analytics.approved} شرکت ({analytics.approvedRate}%)
+                    </span>
                   </div>
                   <div className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${analytics.approvedRate}%` }} />
+                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${analytics.approvedRate}%` }} />
                   </div>
                 </div>
 
+                {/* 2. Processing */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-semibold">
                     <span className="flex items-center gap-1.5 text-purple-700 dark:text-purple-400">
                       <span className="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block" />
-                      در مرحله تایید و قرارداد (بنفش)
+                      در مرحله تایید و تبادل قرارداد
                     </span>
-                    <span className="font-mono">{analytics.processing} پرونده ({analytics.processingRate}%)</span>
+                    <span className="font-mono text-slate-700 dark:text-slate-300">
+                      {analytics.processing} شرکت ({analytics.processingRate}%)
+                    </span>
                   </div>
                   <div className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-purple-500 rounded-full" style={{ width: `${analytics.processingRate}%` }} />
+                    <div className="h-full bg-purple-500 rounded-full transition-all duration-500" style={{ width: `${analytics.processingRate}%` }} />
                   </div>
                 </div>
 
+                {/* 3. Initial */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-semibold">
                     <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-400">
                       <span className="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block" />
-                      اطلاعات اولیه / پیش‌نویس (سفید)
+                      اطلاعات اولیه / پیش‌نویس
                     </span>
-                    <span className="font-mono">{analytics.initial} پرونده ({analytics.initialRate}%)</span>
+                    <span className="font-mono text-slate-700 dark:text-slate-300">
+                      {analytics.initial} شرکت ({analytics.initialRate}%)
+                    </span>
                   </div>
                   <div className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-slate-400 rounded-full" style={{ width: `${analytics.initialRate}%` }} />
+                    <div className="h-full bg-slate-400 rounded-full transition-all duration-500" style={{ width: `${analytics.initialRate}%` }} />
+                  </div>
+                </div>
+
+                {/* 4. Defects */}
+                <div className="space-y-1.5 pt-1 border-t border-slate-200 dark:border-slate-750">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+                      دارای نقص مدارک / نیازمند اقدام
+                    </span>
+                    <span className="font-mono text-amber-700 dark:text-amber-300">
+                      {analytics.withDefects} شرکت ({analytics.total ? Math.round((analytics.withDefects / analytics.total) * 100) : 0}%)
+                    </span>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-amber-500 rounded-full transition-all duration-500" 
+                      style={{ width: `${analytics.total ? Math.round((analytics.withDefects / analytics.total) * 100) : 0}%` }} 
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Detailed Status Frequency List */}
-              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                  فراوانی وضعیت‌های تفصیلی:
-                </h4>
+              {/* Detailed Status Frequency List with Visual Bars */}
+              <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    فراوانی مراحل تفصیلی تعیین وضعیت (کلیک جهت فیلتر جدول):
+                  </h4>
+                  <span className="text-[10px] text-slate-400">
+                    {analytics.statusBreakdown.length} عنوان وضعیت
+                  </span>
+                </div>
 
                 {analytics.statusBreakdown.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-slate-400">
+                  <div className="p-8 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-850 rounded-2xl border border-slate-200 dark:border-slate-800">
                     هنوز پرونده‌ای جهت نمایش فراوانی وضعیت ثبت نشده است.
                   </div>
                 ) : (
-                  analytics.statusBreakdown.map((st, idx) => (
-                    <div
-                      key={idx}
-                      className="p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between text-xs hover:border-purple-300 dark:hover:border-purple-800 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-md bg-purple-50 dark:bg-purple-950 text-purple-600 flex items-center justify-center font-mono text-[10px] font-bold">
-                          {idx + 1}
-                        </span>
-                        <span className="font-bold text-slate-800 dark:text-slate-200">{st.label}</span>
-                      </div>
+                  analytics.statusBreakdown.map((st, idx) => {
+                    const isSelected = selectedStatusPreset === st.label;
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          setSelectedStatusPreset(isSelected ? "all" : st.label);
+                        }}
+                        className={`p-3 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group ${
+                          isSelected
+                            ? "border-purple-500 bg-purple-50/70 dark:bg-purple-950/40 shadow-xs"
+                            : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-purple-300 dark:hover:border-purple-700"
+                        }`}
+                        title="برای فیلتر کردن این وضعیت در جدول کلیک کنید"
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1.5 relative z-10">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-md bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 flex items-center justify-center font-mono text-[10px] font-bold">
+                              {idx + 1}
+                            </span>
+                            <span className="font-bold text-slate-800 dark:text-slate-200">{st.label}</span>
+                          </div>
+                          <div className="flex items-center gap-2 font-mono">
+                            <span className="text-slate-600 dark:text-slate-400 font-bold text-xs">{st.count} شرکت</span>
+                            <span className="px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-bold text-[11px]">
+                              {st.pct}%
+                            </span>
+                          </div>
+                        </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-400 font-mono text-[11px]">{st.count} شرکت</span>
-                        <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 font-mono text-purple-600 dark:text-purple-400 font-bold text-[11px]">
-                          {st.pct}%
-                        </span>
+                        {/* Visual Bar */}
+                        <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden relative z-10">
+                          <div
+                            className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.max(st.pct, 4)}%` }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -699,18 +833,19 @@ export default function ManagementPanel({
                 <th className="p-4">فاز پیشرفت</th>
                 <th className="p-4">تاریخ ثبت</th>
                 <th className="p-4">نواقص مدارک / توضیحات</th>
-                <th className="p-4 text-left">تماس‌های پیگیری</th>
+                <th className="p-4">تماس‌های پیگیری</th>
+                <th className="p-4 text-center">عملیات و ثبت تغییرات</th>
               </tr>
             </thead>
             <tbody>
               {filteredAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-400">
+                  <td colSpan={8} className="p-8 text-center text-slate-400">
                     پرونده‌ای با فیلترهای مشخص‌شده یافت نشد.
                   </td>
                 </tr>
               ) : (
-                filteredAccounts.slice(0, 20).map(acc => (
+                filteredAccounts.slice(0, 50).map(acc => (
                   <tr key={acc.id} className="border-b dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors">
                     <td className="p-4">
                       <div className="font-bold text-slate-900 dark:text-white">{acc.companyName}</div>
@@ -755,8 +890,19 @@ export default function ManagementPanel({
                       {acc.rejectionReason || <span className="text-emerald-600 font-medium">بدون نقص</span>}
                     </td>
 
-                    <td className="p-4 text-left font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                    <td className="p-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
                       {acc.callLogs?.length || 0} تماس
+                    </td>
+
+                    <td className="p-4 text-center">
+                      <button
+                        onClick={() => handleOpenEdit(acc)}
+                        className="px-3 py-1.5 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs mx-auto"
+                        title="بررسی، ویرایش و ثبت تغییرات مدیریتی"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>ثبت تغییرات</span>
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -765,6 +911,29 @@ export default function ManagementPanel({
           </table>
         </div>
       </div>
+
+      {/* Management Quick Status / Edit Modal */}
+      <ManagementEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        account={editingAccount}
+        onSave={handleSaveManagerChanges}
+        onOpenFullKyc={handleOpenFullKycFromEdit}
+        experts={EXPERTS}
+      />
+
+      {/* Full KYC / New Account Modal for Management */}
+      <LegalRegistrationModal
+        isOpen={isFullKycModalOpen || isNewAccountModalOpen}
+        onClose={() => {
+          setIsFullKycModalOpen(false);
+          setIsNewAccountModalOpen(false);
+        }}
+        onSave={handleSaveFullKycAccount}
+        initialAccount={editingAccount}
+        experts={EXPERTS}
+        initialMode="full_kyc"
+      />
     </div>
   );
 }

@@ -7,13 +7,14 @@ import { AuthUser, getCurrentUser, logoutUser } from "@/lib/auth";
 import LandingPage from "@/components/LandingPage";
 import LegalSpecialistPanel from "@/components/LegalSpecialistPanel";
 import ManagementPanel from "@/components/ManagementPanel";
+import SupportAgentPanel from "@/components/SupportAgentPanel";
 import LegalRegistrationModal from "@/components/LegalRegistrationModal";
 import ChangePasswordModal from "@/components/ChangePasswordModal";
 
 const EXPERTS = ["آیگین صدیق", "غزل خدائی", "اسما فاضلی"];
 
 export default function Home() {
-  const [currentRole, setCurrentRole] = useState<"landing" | "specialist" | "management">("landing");
+  const [currentRole, setCurrentRole] = useState<"landing" | "specialist" | "management" | "support">("landing");
   const [accounts, setAccounts] = useState<LegalAccount[]>([]);
   const [isClient, setIsClient] = useState(false);
 
@@ -74,6 +75,8 @@ export default function Home() {
       setCurrentRole("specialist");
     } else if (user.role === "management") {
       setCurrentRole("management");
+    } else if (user.role === "support") {
+      setCurrentRole("support");
     } else {
       setCurrentRole("specialist");
     }
@@ -132,7 +135,7 @@ export default function Home() {
               onBackToLanding={handleLogout}
               onSwitchRole={() => {}}
               currentUser={currentUser}
-              onOpenChangePassword={() => setIsChangePasswordOpen(true)}
+              onOpenChangePassword={currentUser?.canChangePassword !== false ? () => setIsChangePasswordOpen(true) : undefined}
               onLogout={handleLogout}
             />
           </motion.div>
@@ -150,10 +153,32 @@ export default function Home() {
           >
             <ManagementPanel
               accounts={accounts}
+              onUpdateAccounts={saveToStorage}
               onBackToLanding={handleLogout}
               onSwitchRole={() => {}}
               currentUser={currentUser}
-              onOpenChangePassword={() => setIsChangePasswordOpen(true)}
+              onOpenChangePassword={currentUser?.canChangePassword !== false ? () => setIsChangePasswordOpen(true) : undefined}
+              onLogout={handleLogout}
+            />
+          </motion.div>
+        )}
+
+        {/* Screen 4: Direct Support Agent Panel for General Support Team */}
+        {currentRole === "support" && (
+          <motion.div
+            key="support"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6"
+          >
+            <SupportAgentPanel
+              accounts={accounts}
+              onBackToLanding={handleLogout}
+              onSwitchRole={() => {}}
+              currentUser={currentUser}
+              onOpenChangePassword={currentUser?.canChangePassword !== false ? () => setIsChangePasswordOpen(true) : undefined}
               onLogout={handleLogout}
             />
           </motion.div>
