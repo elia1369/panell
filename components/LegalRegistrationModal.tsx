@@ -99,7 +99,7 @@ export default function LegalRegistrationModal({
 
   // Signers & Governance
   const [signers, setSigners] = useState("");
-  const [signersRules, setSignersRules] = useState("متفقاً همراه با مهر شرکت");
+  const [signersRules, setSignersRules] = useState("");
 
   // Legal Documents & Gazette
   const [newspaperNumber, setNewspaperNumber] = useState("");
@@ -151,6 +151,7 @@ export default function LegalRegistrationModal({
       setRejectionReason(initialAccount.rejectionReason || "");
       setProfileUrl(initialAccount.profileUrl || `https://admin.wallex.ir/user/${initialAccount.id}/legal-verification`);
       setSigners(initialAccount.signers || "");
+      setSignersRules(initialAccount.signersRules || "");
       setNewspaperNumber(initialAccount.newspaperNumber || "");
       setGazetteVerified(!!initialAccount.gazetteVerified);
       setIban(initialAccount.iban || "");
@@ -182,6 +183,7 @@ export default function LegalRegistrationModal({
       setRejectionReason("");
       setProfileUrl(`https://admin.wallex.ir/user/${randomUid}/legal-verification`);
       setSigners("");
+      setSignersRules("");
       setNewspaperNumber("");
       setGazetteVerified(false);
       setHasStatute(false);
@@ -210,7 +212,7 @@ export default function LegalRegistrationModal({
   // Calculate KYC form completion percentage
   const calculateCompletion = () => {
     let score = 0;
-    const totalWeights = 10;
+    const totalWeights = 9;
     if (companyName.trim()) score++;
     if (id.trim()) score++;
     if (nationalId.trim()) score++;
@@ -219,7 +221,6 @@ export default function LegalRegistrationModal({
     if (companyPhone.trim() || companyAddress.trim()) score++;
     if (signers.trim()) score++;
     if (gazetteVerified || newspaperNumber.trim()) score++;
-    if (iban.trim()) score++;
     if (callLogs.length > 0 || expertEmailSent.trim() || phase === "approved") score++;
     return Math.round((score / totalWeights) * 100);
   };
@@ -270,6 +271,7 @@ export default function LegalRegistrationModal({
       adminName: adminName.trim(),
       companyName: companyName.trim(),
       signers: signers.trim(),
+      signersRules: signersRules.trim(),
       rejectionReason: rejectionReason.trim(),
       prowal: prowal.trim(),
       expertSignatureEmailSentDate: expertEmailSent,
@@ -376,11 +378,6 @@ export default function LegalRegistrationModal({
             </div>
             <span className="font-bold font-mono text-slate-700 dark:text-slate-300">{completionPct}%</span>
           </div>
-
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-            <span>شناسه کاربری (UID):</span>
-            <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{id || "---"}</span>
-          </div>
         </div>
 
         {/* Step Indicator (Visible in full_kyc mode) */}
@@ -390,8 +387,6 @@ export default function LegalRegistrationModal({
               { num: 1, label: "۱. مشخصات ثبتی", icon: Building2 },
               { num: 2, label: "۲. صاحبان امضا", icon: Users },
               { num: 3, label: "۳. استعلام روزنامه و اسناد", icon: FileCheck2 },
-              { num: 4, label: "۴. شبا و حساب شرکتی", icon: CreditCard },
-              { num: 5, label: "۵. قرارداد و پیگیری تماس", icon: PhoneCall },
             ].map(step => {
               const Icon = step.icon;
               const isActive = activeStep === step.num;
@@ -418,28 +413,11 @@ export default function LegalRegistrationModal({
           </div>
         )}
 
-        {/* Validation Error Banner */}
-        {validationError && (
-          <div className="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40 rounded-xl text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>{validationError}</span>
-          </div>
-        )}
-
         {/* Body Content */}
         <div className="p-6 overflow-y-auto flex-1 space-y-5">
           {/* INITIAL ONLY MODE */}
           {mode === "initial_only" && (
             <div className="space-y-4">
-              <div className="p-3.5 bg-blue-50/70 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl text-xs text-blue-800 dark:text-blue-300 flex items-start gap-2">
-                <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold">ثبت اولیه اطلاعات شخص حقوقی</p>
-                  <p className="text-slate-600 dark:text-slate-400 mt-0.5">
-                    این فرم برای ایجاد سریع پرونده و ثبت اطلاعات اولیه شخص حقوقی در سیستم طراحی شده است. پس از ثبت اولیه، می‌توانید فرم جامع حقوقی را نیز تکمیل فرمایید.
-                  </p>
-                </div>
-              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
@@ -457,7 +435,7 @@ export default function LegalRegistrationModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    شناسه ملی ۱۱ رقمی شرکت
+                    شناسه ملی 11 رقمی
                   </label>
                   <input
                     type="text"
@@ -486,7 +464,7 @@ export default function LegalRegistrationModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    شماره ثبت شرکت
+                    شماره ثبت
                   </label>
                   <input
                     type="text"
@@ -512,11 +490,11 @@ export default function LegalRegistrationModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    شماره تماس رابط یا شرکت
+                    شماره موبایل شرکت
                   </label>
                   <input
                     type="text"
-                    placeholder="مثال: 02188776655 یا 09123456789"
+                    placeholder="مثال: 09123456789"
                     value={companyPhone}
                     onChange={e => setCompanyPhone(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono focus:outline-none focus:border-blue-500"
@@ -553,7 +531,7 @@ export default function LegalRegistrationModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    تاریخ ثبت پرونده (شمسی)
+                    تاریخ ثبت شرکت
                   </label>
                   <input
                     type="text"
@@ -577,17 +555,6 @@ export default function LegalRegistrationModal({
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
-              </div>
-
-              <div className="pt-2 flex justify-between items-center">
-                <button
-                  type="button"
-                  onClick={() => setMode("full_kyc")}
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-semibold cursor-pointer"
-                >
-                  <span>مایل به تکمیل بخش‌های بیشتر (صاحبان امضا، اسناد، شبا) هستید؟ ادامه به فرم کامل</span>
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                </button>
               </div>
             </div>
           )}
@@ -616,7 +583,7 @@ export default function LegalRegistrationModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    شناسه ملی ۱۱ رقمی اشخاص حقوقی
+                    شناسه ملی 11 رقمی
                   </label>
                   <input
                     type="text"
@@ -645,7 +612,7 @@ export default function LegalRegistrationModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    شماره ثبت در اداره ثبت شرکت‌ها
+                    شماره ثبت
                   </label>
                   <input
                     type="text"
@@ -658,7 +625,7 @@ export default function LegalRegistrationModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    کد اقتصادی ۱۲ رقمی
+                    کد اقتصادی
                   </label>
                   <input
                     type="text"
@@ -671,7 +638,7 @@ export default function LegalRegistrationModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    شماره تلفن ثابت دفتر مرکزی
+                    شماره ارتباطی شرکت
                   </label>
                   <input
                     type="text"
@@ -684,7 +651,7 @@ export default function LegalRegistrationModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    کد پستی ۱۰ رقمی اقامتگاه قانونی
+                    کدپستی
                   </label>
                   <input
                     type="text"
@@ -698,7 +665,7 @@ export default function LegalRegistrationModal({
 
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    نشانی ثبتی دقیق مطابق با آخرین روزنامه رسمی
+                    آدرس شرکت
                   </label>
                   <textarea
                     rows={2}
@@ -736,7 +703,7 @@ export default function LegalRegistrationModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    اسامی صاحبان امضای مجاز و سمت‌ها
+                    اسامی صاحبان امضا  و سمت ها و کدملی
                   </label>
                   <textarea
                     rows={3}
@@ -751,24 +718,15 @@ export default function LegalRegistrationModal({
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                     نحوه حق امضای تعهدآور شرکت
                   </label>
-                  <select
+                  <input
+                    type="text"
+                    placeholder="نحوه حق امضای تعهدآور را تایپ کنید (مثال: متفقاً همراه با مهر شرکت)"
                     value={signersRules}
                     onChange={e => setSignersRules(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
-                  >
-                    <option value="متفقاً همراه با مهر شرکت">متفقاً همراه با مهر شرکت (حداقل دو امضا)</option>
-                    <option value="منفرداً توسط مدیرعامل با مهر شرکت">منفرداً توسط مدیرعامل با مهر شرکت</option>
-                    <option value="امضای مدیرعامل به همراه یکی از اعضای هیئت مدیره">امضای مدیرعامل به همراه یکی از اعضای هیئت مدیره</option>
-                    <option value="امضای کلیه صاحبان امضا">امضای کلیه صاحبان امضا</option>
-                  </select>
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500"
+                  />
                 </div>
 
-                <div className="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-600 dark:text-slate-400">
-                  <p className="font-semibold text-slate-800 dark:text-slate-200">نکته احراز هویت والکس:</p>
-                  <p className="mt-1">
-                    صاحبان امضا باید دارای حساب کاربری تایید شده در والکس بوده یا مدارک شناسایی معتبر (کارت ملی هوشمند و شناسنامه) ارائه دهند.
-                  </p>
-                </div>
               </div>
             </div>
           )}
@@ -784,7 +742,7 @@ export default function LegalRegistrationModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    شماره و تاریخ آخرین آگهی روزنامه رسمی
+                    تاریخ آگهی آخرین روزنامه رسمی
                   </label>
                   <input
                     type="text"
@@ -843,261 +801,6 @@ export default function LegalRegistrationModal({
             </div>
           )}
 
-          {/* STEP 4: Banking & Financial */}
-          {mode === "full_kyc" && activeStep === 4 && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-blue-600" />
-                <span>حساب بانکی و شماره شبای حقوقی شرکت</span>
-              </h3>
-
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-xl text-xs text-amber-800 dark:text-amber-300">
-                <p className="font-bold">قانون تطابق نام بانکی:</p>
-                <p className="mt-0.5">
-                  واریز و برداشت ریالی تنها از طریق شماره شبایی امکان‌پذیر است که دقیقاً به نام شخصیت حقوقی (شرکت) افتتاح شده باشد. حساب‌های شخصی اعضا قابل پذیرش نیست.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    شماره شبای حقوقی (IR)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      maxLength={26}
-                      placeholder="IR000000000000000000000000"
-                      value={iban}
-                      onChange={e => setIban(e.target.value.toUpperCase())}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono tracking-wider focus:outline-none focus:border-blue-500 text-left"
-                      dir="ltr"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    بانک عامل
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="مثال: بانک ملت شعبه مرکزی"
-                    value={bankName}
-                    onChange={e => setBankName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    وضعیت استعلام شبا با شناسه ملی
-                  </label>
-                  <div className="flex items-center gap-2 h-11 px-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 rounded-xl text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>تطبیق خودکار با شناسه ملی فعال است</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 5: Contract Dates & Call Logs */}
-          {mode === "full_kyc" && activeStep === 5 && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <PhoneCall className="w-4 h-4 text-blue-600" />
-                <span>وضعیت قرارداد والکس، گردش کار و لاگ تماس‌ها</span>
-              </h3>
-
-              {/* Status and Reason */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    آخرین وضعیت پرونده
-                  </label>
-                  <select
-                    value={lastStatus}
-                    onChange={e => setLastStatus(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
-                  >
-                    {STATUS_PRESETS.map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    فاز کلی پیشرفت
-                  </label>
-                  <select
-                    value={phase}
-                    onChange={e => setPhase(e.target.value as StatusPhase)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
-                  >
-                    <option value="initial">اطلاعات اولیه / پیش‌نویس</option>
-                    <option value="processing">نزدیک تایید / در حال پیگیری</option>
-                    <option value="approved">تایید نهایی شده (سطح ۲)</option>
-                  </select>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    توضیحات تکمیلی یا علت عدم تایید / نواقص
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="در صورت وجود نقص مدارک، علت دقیق را جهت اطلاع کاربر یا سایر کارشناسان یادداشت نمایید."
-                    value={rejectionReason}
-                    onChange={e => setRejectionReason(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 resize-none"
-                  />
-                </div>
-              </div>
-
-              {/* Contract dates */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                  <span>تاریخ‌های چرخه قرارداد حقوقی والکس</span>
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">
-                      ارسال ایمیل جهت امضای قرارداد
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="۱۴۰۲/۰۲/۱۵"
-                      value={expertEmailSent}
-                      onChange={e => setExpertEmailSent(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">
-                      دریافت ایمیل امضا شده از کاربر
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="۱۴۰۲/۰۲/۱۸"
-                      value={userSignedEmailRecv}
-                      onChange={e => setUserSignedEmailRecv(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">
-                      ارسال نسخه قرارداد امضا شده والکس
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="۱۴۰۲/۰۲/۲۰"
-                      value={wallexSignedSent}
-                      onChange={e => setWallexSignedSent(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Call Logs */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    ثبت تماس جدید با کاربر / نماینده حقوقی:
-                  </p>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    تعداد کل تماس‌های ثبت‌شده: {callLogs.length}
-                  </span>
-                </div>
-
-                <div className="p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 items-end">
-                  <div>
-                    <label className="block text-[11px] text-slate-500 mb-1">تاریخ تماس</label>
-                    <input
-                      type="text"
-                      value={newCallDate}
-                      onChange={e => setNewCallDate(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-slate-500 mb-1">کارشناس تماس</label>
-                    <select
-                      value={newCallExpert}
-                      onChange={e => setNewCallExpert(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs"
-                    >
-                      {experts.map(e => <option key={e} value={e}>{e}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-slate-500 mb-1">وضعیت تماس</label>
-                    <select
-                      value={newCallStatus}
-                      onChange={e => setNewCallStatus(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs"
-                    >
-                      {CALL_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-slate-500 mb-1">نتیجه تماس</label>
-                    <select
-                      value={newCallOutcome}
-                      onChange={e => setNewCallOutcome(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs"
-                    >
-                      {CALL_OUTCOMES.map(o => <option key={o} value={o}>{o}</option>)}
-                    </select>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleAddCallLog}
-                    className="h-8.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1"
-                  >
-                    <span>افزودن تماس</span>
-                  </button>
-                </div>
-
-                {/* Call Log List */}
-                {callLogs.length > 0 && (
-                  <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                    {callLogs.map((log, idx) => (
-                      <div 
-                        key={idx} 
-                        className="p-2.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="font-mono text-slate-500">{log.date}</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">{log.expert}</span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                            {log.status}
-                          </span>
-                          <span className="text-slate-600 dark:text-slate-400">{log.result}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveCallLog(idx)}
-                          className="text-red-500 hover:text-red-700 p-1 text-xs cursor-pointer"
-                        >
-                          حذف
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Footer Navigation & Actions */}
@@ -1128,7 +831,7 @@ export default function LegalRegistrationModal({
               </button>
             )}
 
-            {mode === "full_kyc" && activeStep < 5 && (
+            {mode === "full_kyc" && activeStep < 3 && (
               <button
                 type="button"
                 onClick={() => {
@@ -1137,7 +840,7 @@ export default function LegalRegistrationModal({
                     return;
                   }
                   setValidationError("");
-                  setActiveStep(prev => Math.min(5, prev + 1));
+                  setActiveStep(prev => Math.min(3, prev + 1));
                 }}
                 className="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
               >

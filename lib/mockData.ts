@@ -20,6 +20,7 @@ export interface LegalAccount {
   adminName: string; // نام ادمین
   companyName: string; // نام شرکت
   signers: string; // نام صاحبین امضا
+  signersRules?: string; // نحوه حق امضای تعهدآور شرکت
   rejectionReason: string; // دلیل عدم تایید یا توضیحات تکمیلی
   prowal: string; // پرووال (شناسه تیکت یا بیزاجی)
   expertSignatureEmailSentDate: string; // تاریخ ارسال ایمیل جهت امضا قرارداد توسط کارشناس

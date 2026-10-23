@@ -329,7 +329,7 @@ export default function LegalSpecialistPanel({
               className="w-full py-2.5 px-4 bg-purple-500 hover:bg-purple-400 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer"
             >
               <FileText className="w-4 h-4" />
-              <span>تکمیل فرم حقوقی (فرم ۵ مرحله‌ای)</span>
+              <span>تکمیل فرم حقوقی (فرم ۴ مرحله‌ای)</span>
             </button>
           </div>
         </div>
@@ -659,7 +659,7 @@ export default function LegalSpecialistPanel({
                               title="تکمیل و اعتبارسنجی کامل ۵ مرحله احراز هویت حقوقی"
                             >
                               <FileCheck2 className="w-3.5 h-3.5 text-purple-600" />
-                              <span className="hidden sm:inline">تکمیل فرم ۵ مرحله‌ای</span>
+                              <span className="hidden sm:inline">تکمیل فرم ۴ مرحله‌ای</span>
                             </button>
                             <button
                               onClick={() => {
